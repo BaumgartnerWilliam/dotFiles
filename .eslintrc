@@ -1,0 +1,15 @@
+{
+    "env": {
+        "browser": true,
+        "node": true
+    },
+    //"extends": "airbnb",
+   // "extends": "@helios-ag/eslint-config-airbnb-es5",
+    "parser": "babel-eslint",
+    "rules": {
+        "strict": 0
+    },
+    "settings": {
+        "ecmascript": 6
+    }
+}
