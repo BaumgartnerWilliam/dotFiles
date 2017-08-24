@@ -1,5 +1,7 @@
 set ignorecase
 filetype off                  " requireD
+set binary "disable END OF LINE AUTO INSERT
+set noeol "disable END OF LINE AUTO INSERT
 set number
 set relativenumber
 set rtp+=~/.vim/bundle/Vundle.vim
@@ -16,11 +18,14 @@ Plugin 'VundleVim/Vundle.vim'
 " Plugin 'Yggdroot/indentLine'
 " **************
 Plugin 'KurtPreston/vim-autoformat-rails'
+Plugin 'mazubieta/gitlink-vim'
+Plugin 'Chiel92/vim-autoformat'
 Plugin 'airblade/vim-gitgutter'
 Plugin 'othree/xml.vim'
 Plugin 'mattn/emmet-vim'
 Plugin 'terryma/vim-expand-region'
 Plugin 'Valloric/YouCompleteMe'
+Plugin 'tpope/vim-abolish'
 Plugin 'blueyed/vim-diminactive'
 Plugin 'tommcdo/vim-exchange'
 Plugin 'vim-ctrlspace/vim-ctrlspace'
@@ -36,7 +41,7 @@ Plugin 'othree/es.next.syntax.vim'
 Plugin 'maksimr/vim-jsbeautify'
 Plugin 'Chun-Yang/vim-action-ag'
 " Track the engine.
-Plugin 'SirVer/ultisnips'
+" Plugin 'SirVer/ultisnips'
 Plugin 'tpope/vim-repeat'
 " " Snippets are separated from the engine. Add this if you want them:
 Plugin 'honza/vim-snippets'
@@ -54,12 +59,13 @@ Plugin 'tpope/vim-sleuth'
 Plugin 'tpope/vim-surround'
 Plugin 'tpope/vim-sensible'
 Plugin 'marijnh/tern_for_vim', { 'do': 'npm install' }
+Plugin 'prettier/vim-prettier', { 'do': 'npm install', 'for': ['javascript','javascript.jsx',  'typescript', 'css', 'less', 'scss', 'html'] }
 " Plugin 'tpope/vim-vinegar'
 Plugin 'pangloss/vim-javascript', { 'for': ['javascript', 'javascript.jsx'] }
 Plugin 'mxw/vim-jsx', { 'for': ['javascript', 'javascript.jsx'] }
 Plugin 'gavocanov/vim-js-indent'
 Plugin 'junegunn/vim-easy-align'
-Plugin 'nathanaelkane/vim-indent-guides'
+" Plugin 'nathanaelkane/vim-indent-guides'
 Plugin 'scrooloose/nerdcommenter'
 " Plugin 'leafgarland/typescript-vim'
 Plugin 'jelera/vim-javascript-syntax'
@@ -82,6 +88,10 @@ Plugin 'cakebaker/scss-syntax.vim'
 Plugin 'othree/jspc.vim'
 Plugin 'tpope/vim-fugitive'
 Plugin 'kien/ctrlp.vim'
+Plugin 'LeonB/vim-nginx'
+Plugin 'tpope/vim-rails'
+Plugin 'groenewege/vim-less'
+" Plugin 'claco/jasmine.vim'
 " **************************
 " Plugin 'joonty/vdebug'
 "plugin from http://vim-scripts.org/vim/scripts.html
@@ -115,6 +125,7 @@ if filereadable(expand("~/.vimrc_background"))
    let base16colorspace=256
    source ~/.vimrc_background
 endif
+" colorscheme base16-default-dark
 syntax on
 set background=dark
 set incsearch
@@ -122,15 +133,59 @@ set incsearch
 let g:javascript_plugin_jsdoc=1
 let g:javascript_plugin_flow=1
 let g:javascript_plugin_typescript=1
-let g:syntastic_mode_map = { 'mode': 'active',
-                            \ 'active_filetypes': ['python', 'javascript'],
+let g:syntastic_mode_map = { 'mode': 'passive',
+                            \ 'active_filetypes': [],
                             \ 'passive_filetypes': [] }
 set statusline+=%#warningmsg#
 set statusline+=%{SyntasticStatuslineFlag()}
 set statusline+=%*
+" Set up the arrays to ignore for later
+if !exists('g:syntastic_html_tidy_ignore_errors')
+    let g:syntastic_html_tidy_ignore_errors = []
+endif
+
+if !exists('g:syntastic_html_tidy_blocklevel_tags')
+    let g:syntastic_html_tidy_blocklevel_tags = []
+endif
+
+" Try to use HTML5 Tidy for better checking?
+" let g:syntastic_html_tidy_exec = '/usr/local/bin/tidy'
+" AP: honestly can't remember if this helps or not
+" installed with homebrew locally
+
+" Ignore ionic tags in HTML syntax checking
+" See http://stackoverflow.com/questions/30366621
+" ignore errors about Ionic tags
+let g:syntastic_html_tidy_ignore_errors += [
+      \ "<ion-",
+      \ "discarding unexpected </ion-"]
+
+" Angular's attributes confuse HTML Tidy
+let g:syntastic_html_tidy_ignore_errors += [
+      \ " proprietary attribute \"ng-"]
+
+" Angular UI-Router attributes confuse HTML Tidy
+let g:syntastic_html_tidy_ignore_errors += [
+      \ " proprietary attribute \"ui-sref"]
+
+" Angular in particular often makes 'empty' blocks, so ignore
+" this error. We might improve how we do this though.
+" See also https://github.com/scrooloose/syntastic/wiki/HTML:---tidy
+" specifically g:syntastic_html_tidy_empty_tags
+let g:syntastic_html_tidy_ignore_errors += ["trimming empty "]
+
+" Angular ignores
+let g:syntastic_html_tidy_blocklevel_tags += [
+      \ 'ng-include',
+      \ 'ng-form'
+      \ ]
+
+" Angular UI-router ignores
+let g:syntastic_html_tidy_ignore_errors += [
+      \ " proprietary attribute \"ui-sref"]
 let g:syntastic_always_populate_loc_list = 1
 let g:syntastic_auto_loc_list = 0
-let g:syntastic_check_on_open = 1
+let g:syntastic_check_on_open = 0
 let g:jsx_ext_required = 0 
 let g:statline_syntastic = 0
 let g:syntastic_check_on_wq = 0
@@ -155,6 +210,7 @@ let g:UltiSnipsJumpBackwardTrigger="<c-z>"
 let g:UltiSnipsJumpForwardTrigger="<c-b>"
 let g:UltiSnipsListSnippets="<c-l>"
 let g:ctrlp_working_path_mode='ra'
+" g:ctrlp_root_markers=['ui/CHANGELOG.md']
 
 let g:UltiSnipsEditSplit= "context"
 let g:UltiSnipsSnippetDirectories=["UltiSnips", "snips"]
@@ -166,7 +222,7 @@ let g:used_javascript_libs = 'underscore,angularjs,angularui,angularuirouter,rea
 set showcmd
 set textwidth=80
 set foldlevel=99
-set wildignore+=*/.git/*,*/.hg/*,*/.svn/*,*.log,*/.idea/*,*/dist/*,*/.DS_Store,*/vendor/*,*/build/*,*/production/*,*/web/*,*/cordova/*,*/touch/*,*/packages/*
+set wildignore+=*/.git/*,*/.hg/*,*/.svn/*,*.log,*/.idea/*,*/dist/*,*/.DS_Store,*/vendor/*,*/build/*,*/production/*,*/web/*,*/cordova/*,*/touch/*,*/packages/*,*/third-party/*,*/coverage/*
 let g:ctrlp_custom_ignore = '\v[\/](node_modules)$'
 
 augroup VimCSS3Syntax
@@ -327,3 +383,49 @@ xmap ah <Plug>GitGutterTextObjectOuterVisual
 nmap <Leader>hv <Plug>GitGutterPreviewHunk
 match ErrorMsg '\s\+$'
 runtime macros/matchit.vim
+nmap cp :let @" = expand("%")<CR>
+
+" let g:CtrlSpaceLoadLastWorkspaceOnStart = 1
+let g:CtrlSpaceSaveWorkspaceOnSwitch = 1
+let g:CtrlSpaceSaveWorkspaceOnExit = 1
+let g:gitgutter_max_signs=50
+set tabstop=2
+set shiftwidth=2
+set softtabstop=2
+set expandtab
+command GitLink :echo gitlink#GitLink()
+function! CopyGitLink(...) range
+  redir @+
+  silent echo gitlink#GitLink(get(a:, 1, 0))
+  redir END
+endfunction
+nmap <leader>gl :call CopyGitLink()<CR>
+vmap <leader>gl :call CopyGitLink(1)<CR>
+
+
+" max line lengh that prettier will wrap on
+let g:prettier#config#print_width = 80
+
+" number of spaces per indentation level
+let g:prettier#config#tab_width = 2
+
+" use tabs over spaces
+let g:prettier#config#use_tabs = 'false'
+
+" print semicolons
+let g:prettier#config#semi = 'true'
+
+" single quotes over double quotes
+let g:prettier#config#single_quote = 'true'
+
+" print spaces between brackets
+let g:prettier#config#bracket_spacing = 'true'
+
+" put > on the last line instead of new line
+let g:prettier#config#jsx_bracket_same_line = 'true'
+
+" none|es5|all
+let g:prettier#config#trailing_comma = 'none'
+
+" flow|babylon|typescript|postcss
+let g:prettier#config#parser = 'typescript'
